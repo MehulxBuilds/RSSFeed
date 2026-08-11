@@ -13,15 +13,15 @@ import (
 
 type FeedFollowsHandler struct {
 	config      config.Config
-	authService *services.FeedFollowService
+	feedfollowService *services.FeedFollowService
 	db          *pgxpool.Pool
 }
 
-func NewFeedFollowHandler(cfg config.Config, db *pgxpool.Pool, authService *services.FeedFollowService) *FeedFollowsHandler {
+func NewFeedFollowHandler(cfg config.Config, db *pgxpool.Pool, feedfollowingService *services.FeedFollowService) *FeedFollowsHandler {
 	return &FeedFollowsHandler{
 		config:      cfg,
 		db:          db,
-		authService: authService,
+		feedfollowService: feedfollowingService,
 	}
 }
 
@@ -43,7 +43,7 @@ func (h *FeedFollowsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "Invalid feed ID")
 		return
 	}
-	f, err := h.authService.Create(r.Context(), u.ID, body.FeedID)
+	f, err := h.feedfollowService.Create(r.Context(), u.ID, body.FeedID)
 	if err != nil {
 		respondError(w, 500, "Couldn't create feed follow")
 		return
@@ -52,7 +52,7 @@ func (h *FeedFollowsHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 func (h *FeedFollowsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	u, _ := middleware.UserFromContext(r.Context())
-	f, err := h.authService.ForUser(r.Context(), u.ID)
+	f, err := h.feedfollowService.ForUser(r.Context(), u.ID)
 	if err != nil {
 		respondError(w, 500, "Couldn't get feed follows")
 		return
@@ -67,7 +67,7 @@ func (h *FeedFollowsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "Invalid feed follow ID")
 		return
 	}
-	if err := h.authService.Delete(r.Context(), u.ID, id); err != nil {
+	if err := h.feedfollowService.Delete(r.Context(), u.ID, id); err != nil {
 		respondError(w, 404, "Feed follow not found")
 		return
 	}

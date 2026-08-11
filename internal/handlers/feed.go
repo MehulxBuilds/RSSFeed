@@ -11,15 +11,15 @@ import (
 
 type FeedsHandler struct {
 	config      config.Config
-	authService *services.FeedService
+	feedService *services.FeedService
 	db          *pgxpool.Pool
 }
 
-func NewFeedHandler(cfg config.Config, db *pgxpool.Pool, authService *services.FeedService) *FeedsHandler {
+func NewFeedHandler(cfg config.Config, db *pgxpool.Pool, feedService *services.FeedService) *FeedsHandler {
 	return &FeedsHandler{
 		config:      cfg,
 		db:          db,
-		authService: authService,
+		feedService: feedService,
 	}
 }
 
@@ -37,7 +37,7 @@ func (h *FeedsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		respondError(w, 400, "name and url are required")
 		return
 	}
-	f, ff, err := h.authService.Create(r.Context(), u.ID, body.Name, body.URL)
+	f, ff, err := h.feedService.Create(r.Context(), u.ID, body.Name, body.URL)
 	if err != nil {
 		respondError(w, 500, "Couldn't create feed")
 		return
@@ -45,7 +45,7 @@ func (h *FeedsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]any{"feed": f, "feed_follow": ff})
 }
 func (h *FeedsHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	feeds, err := h.authService.All(r.Context())
+	feeds, err := h.feedService.All(r.Context())
 	if err != nil {
 		respondError(w, 500, "Couldn't get feeds")
 		return

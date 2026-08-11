@@ -11,7 +11,7 @@ import (
 
 type PostHandler struct {
 	config      config.Config
-	authService *services.PostService
+	postService *services.PostService
 	db          *pgxpool.Pool
 }
 
@@ -26,7 +26,7 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
 		}
 		limit = n
 	}
-	posts, err := h.authService.ForUser(r.Context(), u.ID, limit)
+	posts, err := h.postService.ForUser(r.Context(), u.ID, limit)
 	if err != nil {
 		respondError(w, 500, "Couldn't get posts for user")
 		return
@@ -34,10 +34,10 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, 200, posts)
 }
 
-func NewPostHandler(cfg config.Config, db *pgxpool.Pool, authService *services.PostService) *PostHandler {
+func NewPostHandler(cfg config.Config, db *pgxpool.Pool, postService *services.PostService) *PostHandler {
 	return &PostHandler{
 		config:      cfg,
 		db:          db,
-		authService: authService,
+		postService: postService,
 	}
 }
