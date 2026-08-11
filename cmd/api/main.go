@@ -1,39 +1,34 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/MehulxBuilds/RSSFeed/internal/config"
+	"github.com/MehulxBuilds/RSSFeed/internal/database"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
-	"github.com/joho/godotenv"
 )
 
-type application struct {
-	DB *gorm.DB
-}
-
 func main() {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Println("No .env file found")
-	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("PORT environment variable is not set")
-	}
-
-	db, err := database.Connect()
+	// Load Context
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Load config: %v", err)
 	}
 
-	app := &application{
-		DB: db,
-	}
-	_ = app
+	// Base Context
+	ctx := context.Background()
 
+	db, err := database.NewPool(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Connect Database: %v", err)
+	}
+
+	defer db.Close()
+	
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
@@ -48,11 +43,12 @@ func main() {
 	v1Router := chi.NewRouter()
 
 	router.Mount("/v1", v1Router)
+
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + cfg.Port,
 		Handler: router,
 	}
 
-	log.Printf("Serving on port: %s\n", port)
+	log.Printf("Serving on port: %s\n", cfg.Port)
 	log.Fatal(srv.ListenAndServe())
 }
