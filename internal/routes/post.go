@@ -12,7 +12,8 @@ type PostRouteDependencies struct {
 }
 
 func RegisterPostRoutes(router *chi.Mux, deps PostRouteDependencies) {
-	router.Route("/post", func(r chi.Router) {
-		
+	router.Route("/posts", func(r chi.Router) {
+		r.Use(deps.PostMiddleware.Authenticate)
+		r.Get("/", deps.PostHandler.Get)
 	})
 }

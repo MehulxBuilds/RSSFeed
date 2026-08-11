@@ -4,10 +4,14 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/MehulxBuilds/RSSFeed/internal/config"
 	"github.com/MehulxBuilds/RSSFeed/internal/database"
 	"github.com/MehulxBuilds/RSSFeed/internal/server"
+	"github.com/MehulxBuilds/RSSFeed/internal/services"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 )
@@ -21,7 +25,8 @@ func main() {
 	}
 
 	// Base Context
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	db, err := database.NewPool(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -29,7 +34,7 @@ func main() {
 	}
 
 	defer db.Close()
-	
+
 	def_router := chi.NewRouter()
 
 	def_router.Use(cors.Handler(cors.Options{
@@ -48,13 +53,15 @@ func main() {
 	def_router.Get("/health", server.HealthCheck)
 
 	v1Router := chi.NewRouter()
-	def_router.Mount("/v1", v1Router)
+	def_router.Mount("/api/v1", v1Router)
 
 	// Make Chi App ( This will handle everything under the hood )
 	err = server.New(cfg, db, v1Router)
 	if err != nil {
 		log.Fatalf("Server Registration Error: %v", err)
 	}
+
+	go services.StartScraping(ctx, db, 10, time.Minute)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,

@@ -12,7 +12,8 @@ type FeedRouteDependencies struct {
 }
 
 func RegisterFeedRoutes(router *chi.Mux, deps FeedRouteDependencies) {
-	router.Route("/feed", func(r chi.Router) {
-		
+	router.Route("/feeds", func(r chi.Router) {
+		r.Get("/", deps.FeedHandler.GetAll)
+		r.With(deps.FeedMiddleware.Authenticate).Post("/", deps.FeedHandler.Create)
 	})
 }

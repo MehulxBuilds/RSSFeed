@@ -12,7 +12,10 @@ type FeedFollowRouteDependencies struct {
 }
 
 func RegisterFeedFollowRoutes(router *chi.Mux, deps FeedFollowRouteDependencies) {
-	router.Route("/feed-follow", func(r chi.Router) {
-		
+	router.Route("/feed_follows", func(r chi.Router) {
+		r.Use(deps.FeedFollowMiddleware.Authenticate)
+		r.Get("/", deps.FeedFollowHandler.Get)
+		r.Post("/", deps.FeedFollowHandler.Create)
+		r.Delete("/{feedFollowID}", deps.FeedFollowHandler.Delete)
 	})
 }
